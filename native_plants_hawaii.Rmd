@@ -9,17 +9,17 @@ https://web.archive.org/web/20240520100248/http://nativeplants.hawaii.edu/
 Can use the ruby package 'wayback_machine_downloader'.
 
 
-
-```{r wb, eval = TRUE, echo = TRUE}
+```{r wb, eval = TRUE, echo = TRUE, cache = TRUE}
 
 library(pacman)
-p_load(rvest, magrittr)
+p_load(rvest, magrittr, wordcloud, RColorBrewer)
 
 extract_spp_name <- function(x){
-    out <- strsplit(x, "-")[[1]][1]
-    out <- strsplit(out, " ")[[1]]
+    out <- strsplit(x, " ")[[1]]
     out <- out[out != "\r"]
-    out <- out[!(grepl("var", out))]
+    out <- out[out != "var."]
+    out <- out[out != "subsp."]
+    out <- out[1:((1:length(out))[out == "-"] - 1)]
     out <- paste(out, collapse = "_")
     return(out)
 }
@@ -31,15 +31,19 @@ html <- lapply(urls, read_html)
 
 text <- lapply(html, function(x) x %>% html_elements("p") %>% html_text2())
 spp <- lapply(text, function(x) x[grepl("View Profile", x)])
+
 spp.name <- lapply(spp, 
                    function(x) 
                        unlist(lapply(x, function(x) 
                            lapply(x, extract_spp_name))))
 spp.page <- unlist(spp.name)
-spp.page[spp.page == "Vigna_o"] <- "Vigna_o-wahuensis"
-spp.page[spp.page == "Adiantum_capillus"] <- "Adiantum_capillus-veneris"
-spp.page[spp.page == "Bidens_micrantha_subsp._micrantha"] <- "Bidens_micrantha_micrantha"
-
+spp.page <- gsub("Chrysodracon", "Pleomele", spp.page)
+spp.page[spp.page == "Euphorbia_skottsbergii_kalaeloana"] <- "Euphorbia_skottsbergii_skottsbergii"
+spp.page[spp.page == "Fimbristylis_cymosa_umbello-capitata"] <- "Fimbristylis_cymosa"
+spp.page[spp.page == "Lipochaeta_integrifolia"] <- "Melanthera_integrifolia"
+spp.page <- spp.page[spp.page != "Metrosideros_macropus"]
+spp.page[spp.page == "Sapindus_saponaria_saponaria"] <- "Sapindus_saponaria"
+spp.page[spp.page == "Scaevola_taccada"] <- "Scaevola_sericea"
 spp.page <- paste0("http://nativeplants.hawaii.edu/plant/view/", 
                   spp.page)
 
@@ -48,9 +52,36 @@ for (i in seq_along(spp.page)){
     plant.html[[i]] <- read_html(spp.page[[i]])
 }
 
-plant.html <- read_html(spp.page[[227]])
-plant.txt <- plant.html %>% html_elements("div") %>% html_text2()
+plant.txt <- lapply(plant.html, function(plant.html) plant.html %>% html_elements("div") %>% html_text2())
+
+genera <- unlist(lapply(strsplit(unlist(spp.name), "_"), function(x) x[1]))
+genera.tab <- table(genera)
+
+```
+
+```{r search-txt, eval = TRUE, echo = TRUE}
+
+plant.string <- lapply(plant.txt, function(x) x[[1]])
+
+spp.page[grep("\ awa ", plant.string)]
+spp.page[grep("\ ‘awa\ ", plant.string)]
+spp.page[grep("\ kalo ", plant.string)]
+
+```
+
+```{r plot-genera, eval = TRUE, echo = TRUE}
 
 
+plot(sort(genera.tab, decreasing = TRUE)[1:20], las = 2, xlab = "")
+
+```
+
+
+```{r wc-genera, eval = TRUE, echo = TRUE}
+
+pal <- brewer.pal(6,"Dark2")
+pal <- pal[-(1)]
+wordcloud(names(genera.tab), genera.tab, colors = pal,
+                     vfont=c("gothic english","plain"))
 
 ```
