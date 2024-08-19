@@ -3,10 +3,11 @@ title: Webscraping Native Plants Hawaii
 
 ---
 
-https://web.archive.org/web/20240520100248/http://nativeplants.hawaii.edu/
-
+Cross-reference with
+http://data.bishopmuseum.org/ethnobotanydb/ethnobotany.php
 
 Can use the ruby package 'wayback_machine_downloader'.
+https://web.archive.org/web/20240520100248/http://nativeplants.hawaii.edu/
 
 
 ```{r wb, eval = TRUE, echo = TRUE, cache = TRUE}
